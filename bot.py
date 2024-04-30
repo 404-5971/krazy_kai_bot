@@ -21,6 +21,20 @@ def save_data(data):
 
 announcement_channel_id = 1195406286297243679
 
+role_list = [
+    'General Member',
+    'Active Member',
+    'Loyal Member',
+    'Official Member',
+    'Krazy Member',
+    'Insane Member',
+    'Prodigy Member',
+    'Immortal Member',
+    'Legendary Member',
+    'Champion Member'
+]
+
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
@@ -59,68 +73,26 @@ async def on_message(message):
             await message.author.add_roles(role)
             await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **5**!')
 
-    elif count == 500:
-        role = discord.utils.get(message.guild.roles, name="General Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **10**!')
+    elif count % 50 == 0.0:
+        level = count / 50 # Simple math to determine level
+        if level % 10 == 0: 
+            try:
+                role = discord.utils.get(message.guild.roles, name=role_list[int((level/10))-1])
+                await message.author.add_roles(role)
+                await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **{level}**!')
+            except:
+                print("We couldn't find the role or something")
 
-    elif count == 1000:
-        role = discord.utils.get(message.guild.roles, name="Active Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **20**!')
+        else:
+                # Get the announcement channel
+                announcement_channel = bot.get_channel(announcement_channel_id)
+            
+                if announcement_channel:
+                    # Send announcement message
+                    await announcement_channel.send(f'{message.author.mention} has reached level **{level}**. GG!')
+                else:
+                    print("We couldn't find the channel or something")
 
-    elif count == 1500:
-        role = discord.utils.get(message.guild.roles, name="Loyal Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **30**!')
-        
-    elif count == 2000:
-        role = discord.utils.get(message.guild.roles, name="Official Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **40**!')
-
-    elif count == 2500:
-        role = discord.utils.get(message.guild.roles, name="Krazy Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **50**!')
-
-    elif count == 3000:
-        role = discord.utils.get(message.guild.roles, name="Insane Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **60**!')
-
-    elif count == 3500:
-        role = discord.utils.get(message.guild.roles, name="Prodigy Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **70**!')
-
-    elif count == 4000:
-        role = discord.utils.get(message.guild.roles, name="Immortal Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **80**!')
-
-    elif count == 4500:
-        role = discord.utils.get(message.guild.roles, name="Legendary Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **90**!')
-
-    elif count == 5000:
-        role = discord.utils.get(message.guild.roles, name="Legendary Member")
-        await message.author.add_roles(role)
-        await message.channel.send(f'Congratulations {message.author.mention}! You have been awarded the {role.name} role for earning level **100**!')
-
-    # Check if the user has sent a multiple of 50 messages
-    if count % 50 == 0:
-        # Calculate the level
-        level = count // 50
-        
-        # Get the announcement channel
-        announcement_channel = bot.get_channel(announcement_channel_id)
-        
-        if announcement_channel:
-            # Send announcement message
-            await announcement_channel.send(f'{message.author.mention} has reached level **{level}**. GG!')
-    
     # Save data
     save_data(data)
     
@@ -134,4 +106,31 @@ async def message_count(ctx):
     count = data.get(user_id, 0)
     await ctx.send(f'You have sent {count} messages.')
 
-bot.run("MTIzNDYzMjcxNDUxNTI1MTIyMA.GT4zEY.PA9Jge04fnEUt2_1K_T_O-w0gwnOGXbFML4q1Q")
+@bot.command()
+async def leaderboard(ctx):
+    with open('message_count.json', 'r') as f:
+        message_count = json.load(f)
+        
+    # Sort the message count dictionary by values (message counts) in descending order
+    sorted_message_count = dict(sorted(message_count.items(), key=lambda item: item[1], reverse=True))
+
+    # Create an embed
+    embed = discord.Embed(title="Message Leaderboard", color=0xde852a)
+    
+    # Add top 10 users to the embed
+    count = 0
+    for user_id, message_count in sorted_message_count.items():
+        user = bot.get_user(int(user_id))
+        if user is not None:
+            count += 1
+            # Convert message count to levels
+            level = message_count // 50
+            embed.add_field(name=f"#{count} • {user.name} • LVL: {level}", value='', inline=False)
+        if count == 10:
+            break
+    
+    # Send the embed
+    await ctx.send(embed=embed)
+
+#damn brit token
+bot.run("")
